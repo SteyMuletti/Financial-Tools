@@ -1,90 +1,117 @@
-import yfinance as yf
+import sys
 import matplotlib.pyplot as plt
+import numpy as np
+import yfinance as yf
+from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-def get_ticker_info(ticker):
-    # Get data for the specified ticker
-    data = yf.Ticker(ticker)
-    # Return the data
-    return data
+class StockAnalyzer(QWidget):
+    def __init__(self):
+        super().__init__()
 
-def show_basic_info(data):
-    # Display basic info about the stock
-    info = data.info
-    print(f"Name: {info['longName']}")
-    print(f"Industry: {info['industry']}")
-    print(f"Sector: {info['sector']}")
-    print(f"Country: {info['country']}")
-    print(f"Market Cap: {info['marketCap']}")
-    print(f"PE Ratio: {info['trailingPE']}")
-    print(f"Forward PE Ratio: {info['forwardPE']}")
-    print(f"PEG Ratio: {info['pegRatio']}")
+        # create the GUI widgets
+        self.ticker_label = QLabel("Enter a Ticker Symbol:")
+        self.ticker_edit = QLineEdit()
+        self.basic_info_button = QPushButton("Basic Info")
+        self.historical_data_button = QPushButton("Historical Data")
+        self.risk_return_button = QPushButton("Risk and Return")
+        self.dividend_yield_button = QPushButton("Dividend Yield")
+        self.result_label = QLabel()
 
-def show_historical_data(data):
-    # Get historical data for the stock
-    history = data.history(period="max")
+        # connect the buttons to their respective functions
+        self.basic_info_button.clicked.connect(self.get_basic_info)
+        self.historical_data_button.clicked.connect(self.get_historical_data)
+        self.risk_return_button.clicked.connect(self.get_risk_return)
+        self.dividend_yield_button.clicked.connect(self.get_dividend_yield)
 
-    # Display the historical data
-    fig, ax = plt.subplots()
-    ax.plot(history.index, history["Close"])
-    ax.set(xlabel='Date', ylabel='Price', title='Historical Stock Prices')
-    plt.show()
+        # create the layout and add the widgets
+        layout = QVBoxLayout()
+        layout.addWidget(self.ticker_label)
+        layout.addWidget(self.ticker_edit)
+        layout.addWidget(self.basic_info_button)
+        layout.addWidget(self.historical_data_button)
+        layout.addWidget(self.risk_return_button)
+        layout.addWidget(self.dividend_yield_button)
+        layout.addWidget(self.result_label)
 
-def calculate_risk_return(data):
-    # Get historical data for the stock
-    history = data.history(period="max")
+        # set the layout for the widget
+        self.setLayout(layout)
 
-    # Calculate the daily returns
-    history["daily_return"] = history["Close"].pct_change()
+    def get_basic_info(self):
+        ticker = self.ticker_edit.text()
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            basic_info_str = f"Name: {info['longName']}\n" \
+                             f"Industry: {info['industry']}\n" \
+                             f"Market Cap: {info['marketCap']}\n" \
+                             f"Country: {info['country']}\n" \
+                             f"Sector: {info['sector']}\n" \
+                             f"PE Ratio: {info['trailingPE']:.2f}\n" \
+                             f"Forward PE Ratio: {info['forwardPE']:.2f}\n" \
+                             f"PEG Ratio: {info['pegRatio']:.2f}\n" \
+                             f"Price-to-Sales Ratio: {info['priceToSalesTrailing12Months']:.2f}\n" \
+                             f"Price-to-Book Ratio: {info['priceToBook']:.2f}\n" \
+                             f"52-Week High: {info['fiftyTwoWeekHigh']:.2f}\n" \
+                             f"52-Week Low: {info['fiftyTwoWeekLow']:.2f}"
+            self.result_label.setText(basic_info_str)
+        except:
+            self.result_label.setText("No Data")
 
-    # Calculate the mean daily return and daily volatility
-    mean_daily_return = history["daily_return"].mean()
-    daily_volatility = history["daily_return"].std()
+    def get_historical_data(self):
+        ticker = self.ticker_edit.text()
+        try:
+            stock = yf.Ticker(ticker)
+            hist_data = stock.history(period='max')
+            fig, ax = plt.subplots()
+            ax.plot(hist_data.index, hist_data['Close'], label='Close')
+            ax.plot(hist_data.index, hist_data['Open'], label='Open')
+            ax.legend()
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.set_title(f'{ticker} Historical Data')
+            plt.show()
+        except:
+            self.result_label.setText("No Data")
 
-    # Calculate the annualized values
-    annualized_return = (1 + mean_daily_return) ** 252 - 1
-    annualized_volatility = daily_volatility * 252 ** 0.5
+    def get_risk_return(self):
+        ticker = self.ticker_edit.text()
+        try:
+            stock = yf.Ticker(ticker)
+            hist_data = stock.history(period='max')
+            returns = hist_data['Close'].pct_change()
+            volatility = returns.std()
+            annualized_return = ((1 + returns.mean()) ** 252) - 1
+            fig, ax = plt.subplots()
+            ax.hist(returns, bins=50, alpha=0.5)
+            ax.axvline(x=volatility, color='red', linestyle='--', label='Volatility')
+            ax.legend()
+            ax.set_xlabel('Returns')
+            ax.set_ylabel('Frequency')
+            ax.set_title(f'{ticker} Risk and Return')
+            plt.show()
+        except:
+            self.result_label.setText("No Data")
 
-    # Display the results
-    print(f"Annualized Return: {annualized_return:.4%}")
-    print(f"Annualized Volatility: {annualized_volatility:.4%}")
+    def get_dividend_yield(self):
+        ticker = self.ticker_edit.text()
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            dividend_yield = info['dividendYield']
+            self.result_label.setText(f"Dividend Yield: {dividend_yield:.4f}")
+        except:
+            self.result_label.setText("No Data")
 
-    # Plot the daily returns
-    fig, ax = plt.subplots()
-    ax.plot(history.index, history["daily_return"])
-    ax.set(xlabel='Date', ylabel='Daily Return', title='Daily Returns')
-    plt.show()
 
-def calculate_dividend_yield(data):
-    # Get the latest dividend yield for the stock
-    div_yield = data.info["dividendYield"]
+if __name__ == '__main__':
+    # create the QApplication
+    app = QApplication(sys.argv)
 
-    # Display the dividend yield
-    print(f"Dividend Yield: {div_yield:.4%}")
+    # create the widget
+    analyzer = StockAnalyzer()
 
-def main():
-    # Get input from the user
-    while True:
-        ticker = input("Enter a ticker symbol (or QUIT to exit): ").upper()
-        if ticker == "QUIT":
-            break
+    # show the widget
+    analyzer.show()
 
-        # Get the data for the specified ticker
-        data = get_ticker_info(ticker)
-
-        # Get the user's choice and perform the corresponding action
-        while True:
-            choice = input("What would you like to do?\n1. Show basic info\n2. Show historical data\n3. Calculate risk and return\n4. Calculate dividend yield\n5. Exit\nEnter a number: ")
-            if choice == "1":
-                show_basic_info(data)
-            elif choice == "2":
-                show_historical_data(data)
-            elif choice == "3":
-                calculate_risk_return(data)
-            elif choice == "4":
-                calculate_dividend_yield(data)
-            elif choice == "5":
-                break
-
-if __name__ == "__main__":
-    main()
-3
+    # run the event loop
+    sys.exit(app.exec_())
