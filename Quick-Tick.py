@@ -102,9 +102,14 @@ class StockAnalyzer(QWidget):
             returns = hist_data['Close'].pct_change()
             volatility = returns.std()
             annualized_return = ((1 + returns.mean()) ** 252) - 1
+            beta = stock.info['beta']
             fig, ax = plt.subplots()
             ax.hist(returns, bins=50, alpha=0.5)
             ax.axvline(x=volatility, color='red', linestyle='--', label='Volatility')
+            if beta > 1:
+                ax.axvline(x=beta, color='red', linestyle='--', label='Beta')
+            else:
+                ax.axvline(x=beta, color='green', linestyle='--', label='Beta')
             ax.legend()
             ax.set_xlabel('Returns')
             ax.set_ylabel('Frequency')
