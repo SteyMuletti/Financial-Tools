@@ -15,6 +15,7 @@ class StockAnalyzer(QWidget):
         self.historical_data_button = QPushButton("Historical Data")
         self.risk_return_button = QPushButton("Risk and Return")
         self.dividend_yield_button = QPushButton("Dividend Yield")
+        self.technical_indicators_button = QPushButton("Technical Indicators")
         self.result_label = QLabel()
 
         # connect the buttons to their respective functions
@@ -22,6 +23,7 @@ class StockAnalyzer(QWidget):
         self.historical_data_button.clicked.connect(self.get_historical_data)
         self.risk_return_button.clicked.connect(self.get_risk_return)
         self.dividend_yield_button.clicked.connect(self.get_dividend_yield)
+        self.technical_indicators_button.clicked.connect(self.get_technical_indicators)
 
         # create the layout and add the widgets
         layout = QVBoxLayout()
@@ -31,6 +33,7 @@ class StockAnalyzer(QWidget):
         layout.addWidget(self.historical_data_button)
         layout.addWidget(self.risk_return_button)
         layout.addWidget(self.dividend_yield_button)
+        layout.addWidget(self.technical_indicators_button)
         layout.addWidget(self.result_label)
 
         # set the layout for the widget
@@ -99,6 +102,25 @@ class StockAnalyzer(QWidget):
             info = stock.info
             dividend_yield = info['dividendYield']
             self.result_label.setText(f"Dividend Yield: {dividend_yield:.4f}")
+        except:
+            self.result_label.setText("No Data")
+
+    def get_technical_indicators(self):
+        ticker = self.ticker_edit.text()
+        try:
+            stock = yf.Ticker(ticker)
+            hist_data = stock.history(period='max')
+            sma_50 = hist_data['Close'].rolling(window=50).mean()
+            sma_200 = hist_data['Close'].rolling(window=200).mean()
+            fig, ax = plt.subplots()
+            ax.plot(hist_data.index, hist_data['Close'], label='Close')
+            ax.plot(hist_data.index, sma_50, label='SMA 50')
+            ax.plot(hist_data.index, sma_200, label='SMA 200')
+            ax.legend()
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.set_title(f'{ticker} Technical Indicators')
+            plt.show()
         except:
             self.result_label.setText("No Data")
 
