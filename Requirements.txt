@@ -1,18 +1,17 @@
-To run the Stock Analyzer program, please follow these steps:
+To run the Quick Ticker program, please follow these steps:
 
 Make sure you have Python 3.x installed on your computer. If you don't have Python installed, you can download it from the official website: https://www.python.org/downloads/
 
 Install the required libraries by running the following command in your terminal or command prompt:
 
 pip install matplotlib numpy yfinance PyQt5
-Download the 'stock_analyzer.py' file from the repository and save it to your preferred location.
+Download the 'Quick-Tick.py' file from the repository and save it to your preferred location.
 
-Open your terminal or command prompt and navigate to the directory where the 'stock_analyzer.py' file is saved.
+Open your terminal or command prompt and navigate to the directory where the 'Quick-Tick.py' file is saved.
 
 To start the program, run the following command:
 
-Copy code
-python stock_analyzer.py
+python Quick-Tick.py
 The program will open a GUI window where you can enter a ticker symbol and select the desired analysis.
 
 Once you select an analysis, the program will display the results in the GUI or generate a plot.
